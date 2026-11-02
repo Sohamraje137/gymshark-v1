@@ -13,7 +13,7 @@ announcements, two-way messaging, and embedded videos.
 | `MONGODB_URI` | Database connection string | Local MongoDB, Docker, or MongoDB Atlas (free tier), step 2 below |
 | `COACH_EMAILS` | The coach's email(s), comma-separated | You choose |
 | `DEV_LOGIN_ENABLED` | `true` to allow logging in without Google (development) | See "Dev login" below |
-| `AUTH_URL` | Public URL of the app | `http://localhost:3000` locally, `https://your-domain` in production |
+| `AUTH_URL` | Public URL of the app | Leave unset locally; `https://your-domain` in production |
 
 You **don't** need a YouTube API key. Videos are embedded from their normal share links.
 You also **don't** need a separate Calendar API key. Calendar access uses the same Google login.
@@ -62,6 +62,9 @@ cp .env.example .env.local     # then fill in the values
 npm install
 npm run dev                    # http://localhost:3000
 ```
+
+Open the app at **http://localhost:3000**. Google only accepts the redirect URI you registered, so Google sign-in works on `localhost` only.
+Dev login also works on your LAN IP (for testing on a phone), but not on `127.0.0.1`: Next.js treats it as `localhost`, so the session cookie is lost after sign-in. Hot reload is blocked on a LAN IP unless you add it to `allowedDevOrigins` in `next.config.ts`.
 
 Sign in with a Google account listed in `COACH_EMAILS`. That account becomes the coach automatically.
 Everyone else becomes a client on first login.

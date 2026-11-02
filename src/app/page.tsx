@@ -1,3 +1,4 @@
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { devLoginEnabled, signIn } from "@/auth";
 import { getCurrentUser } from "@/lib/session";
@@ -13,6 +14,9 @@ export default async function Home({ searchParams }: PageProps<"/">) {
   if (await getCurrentUser()) redirect("/dashboard");
   const { error } = await searchParams;
   const needsPasscode = !!process.env.DEV_LOGIN_PASSCODE;
+  // Next.js treats 127.0.0.1 as localhost, so sign-in redirects to localhost and the cookie set here is lost.
+  const host = (await headers()).get("host") ?? "";
+  const localhostUrl = host.startsWith("127.0.0.1") ? `http://${host.replace("127.0.0.1", "localhost")}` : null;
 
   async function devLogin(formData: FormData) {
     "use server";
@@ -30,6 +34,15 @@ export default async function Home({ searchParams }: PageProps<"/">) {
       <div className="card w-full max-w-sm text-center">
         <h1 className="text-3xl font-semibold tracking-tight">{APP_NAME}</h1>
         <p className="mt-2 text-sm text-slate-600">{APP_DESCRIPTION}</p>
+        {localhostUrl && (
+          <p className="mt-4 rounded-lg bg-amber-50 p-2 text-sm text-amber-800">
+            Sign-in doesn&apos;t work on 127.0.0.1. Open{" "}
+            <a href={localhostUrl} className="font-medium underline">
+              {localhostUrl}
+            </a>{" "}
+            instead.
+          </p>
+        )}
         {error && (
           <p className="mt-4 rounded-lg bg-red-50 p-2 text-sm text-red-700">
             {error === "AccessDenied"

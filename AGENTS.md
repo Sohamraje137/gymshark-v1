@@ -43,6 +43,7 @@ Server Components and Server Actions everywhere. There are no REST endpoints exc
 
 ## Running and verifying
 
+- Use **http://localhost:3000**, not 127.0.0.1: Next.js reports 127.0.0.1 as localhost, so sign-in loses its cookie there. In dev, `/sw.js` is rewritten to `public/sw-dev.js`, a worker that removes itself, because a caching worker serves stale chunks and breaks hot reload. Keep dev-server logs outside the repo, e.g. in `/tmp`.
 - MongoDB runs locally (`brew services start mongodb-community`). The dev server is `npm run dev` on :3000. It may already be running; check with `lsof -ti:3000` before starting another.
 - **Dev login** (no Google needed): `DEV_LOGIN_ENABLED=true` in `.env.local`. Demo users after `npm run seed`:
   `coach@demo.local` (coach), `alex@demo.local` (active client with data), `priya@demo.local` (new client, not onboarded).
