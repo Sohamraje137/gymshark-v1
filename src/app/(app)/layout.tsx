@@ -4,13 +4,29 @@ import { signOut } from "@/auth";
 import { requireUser } from "@/lib/session";
 import { APP_NAME } from "@/lib/site";
 
-const links = [
-  { href: "/dashboard", label: "Home" },
-  { href: "/announcements", label: "Announcements" },
-  { href: "/messages", label: "Messages" },
-  { href: "/calendar", label: "Calendar" },
-  { href: "/videos", label: "Videos" },
-];
+// Navigation per role. Add new pages here.
+const NAV = {
+  coach: [
+    { href: "/dashboard", label: "Home" },
+    { href: "/clients", label: "Clients" },
+    { href: "/schedule", label: "Schedule" },
+    { href: "/messages", label: "Messages" },
+    { href: "/announcements", label: "Announcements" },
+    { href: "/videos", label: "Videos" },
+    { href: "/calendar", label: "Calendar" },
+    { href: "/access", label: "Access" },
+  ],
+  client: [
+    { href: "/dashboard", label: "Home" },
+    { href: "/log", label: "Log" },
+    { href: "/check-ins", label: "Check-ins" },
+    { href: "/sessions", label: "Sessions" },
+    { href: "/messages", label: "Messages" },
+    { href: "/announcements", label: "Announcements" },
+    { href: "/videos", label: "Videos" },
+    { href: "/settings/integrations", label: "Connections" },
+  ],
+};
 
 export default async function AppLayout({ children }: LayoutProps<"/">) {
   const user = await requireUser();
@@ -24,7 +40,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
           </Link>
           {/* On phones the nav drops to its own scrollable row under the brand. */}
           <nav className="order-last -mx-2 flex w-full gap-1 overflow-x-auto text-sm sm:order-none sm:mx-0 sm:w-auto sm:flex-1">
-            {[...links, ...(user.role === "admin" ? [{ href: "/admin", label: "Admin" }] : [])].map(
+            {NAV[user.role].map(
               (l) => (
                 <Link
                   key={l.href}

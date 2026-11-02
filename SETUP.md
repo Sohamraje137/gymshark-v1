@@ -1,6 +1,6 @@
 # Setup & usage guide
 
-A Progressive Web App with Google login, JWT sessions, admin/user roles, Google Calendar,
+A Progressive Web App with Google login, JWT sessions, coach/client roles, Google Calendar,
 announcements, two-way messaging, and embedded videos.
 
 ## What you need to give the app
@@ -11,7 +11,8 @@ announcements, two-way messaging, and embedded videos.
 | `AUTH_GOOGLE_SECRET` | Google OAuth client secret | Same place as the client ID |
 | `AUTH_SECRET` | Random secret that signs the JWT session cookie | Run `npx auth secret` or `openssl rand -base64 32` |
 | `MONGODB_URI` | Database connection string | Local MongoDB, Docker, or MongoDB Atlas (free tier), step 2 below |
-| `ADMIN_EMAILS` | Your Google email(s), comma-separated | You choose |
+| `COACH_EMAILS` | The coach's email(s), comma-separated | You choose |
+| `DEV_LOGIN_ENABLED` | `true` to allow logging in without Google (development) | See "Dev login" below |
 | `AUTH_URL` | Public URL of the app | `http://localhost:3000` locally, `https://your-domain` in production |
 
 You **don't** need a YouTube API key. Videos are embedded from their normal share links.
@@ -62,10 +63,19 @@ npm install
 npm run dev                    # http://localhost:3000
 ```
 
-Sign in with a Google account listed in `ADMIN_EMAILS`. That account becomes an admin automatically.
-Everyone else becomes a regular user on first login.
+Sign in with a Google account listed in `COACH_EMAILS`. That account becomes the coach automatically.
+Everyone else becomes a client on first login.
 
-Other scripts: `npm run build`, `npm start` (production server), `npm run lint`.
+### Dev login (before Google approves the app)
+
+Set `DEV_LOGIN_ENABLED=true` in `.env.local`. The sign-in page then shows a **Dev login** box where you can sign in as any email,
+choosing coach or client for new users. Run `npm run seed` once to create demo users with sample data:
+`coach@demo.local`, `alex@demo.local` (active client), `priya@demo.local` (new client).
+
+In production, dev login stays off unless you also set `DEV_LOGIN_PASSCODE`. Anyone with the passcode can sign in as anyone,
+so turn it off (`DEV_LOGIN_ENABLED=false`) once Google login is approved.
+
+Other scripts: `npm run build`, `npm start` (production server), `npm run lint`, `npm run seed` (demo data).
 
 ---
 
@@ -82,22 +92,22 @@ Browser (PWA) ──► Next.js (pages + server actions) ──► MongoDB
 |---|---|---|
 | Google login | `src/auth.ts` | Auth.js v5. On first login a `User` document is created in MongoDB. |
 | JWT sessions | `src/auth.ts`, `src/proxy.ts` | Sessions are a signed, encrypted JWT cookie with a 30-day sliding expiry. Sessions are not stored in the database. |
-| Roles / admin | `src/lib/session.ts`, `/admin` | `requireUser()` / `requireAdmin()` re-read the role from the database, so promoting, demoting, or blocking someone takes effect immediately. |
+| Roles | `src/lib/session.ts`, `/access` | `requireUser()` / `requireCoach()` re-read the role from the database, so promoting, demoting, or blocking someone takes effect immediately. |
 | Calendar | `src/lib/google-calendar.ts`, `/calendar` | Lists upcoming events and adds new ones to the user's primary Google Calendar. |
-| Announcements | `/announcements` | Admins post and delete; everyone reads. |
-| Messaging | `/messages` | Each user has one private thread with the admin team. Admins see an inbox, and users who need a reply are flagged. Not real-time: messages appear on refresh or navigation. |
-| Videos | `src/lib/video.ts`, `/videos` | Admins paste a YouTube (watch, youtu.be, shorts, live) or Vimeo link. Other sites are rejected. |
+| Announcements | `/announcements` | The coach posts and deletes; everyone reads. |
+| Messaging | `/messages` | Each client has one private thread with the coach. The coach sees an inbox, and clients who need a reply are flagged. Not real-time: messages appear on refresh or navigation. |
+| Videos | `src/lib/video.ts`, `/videos` | The coach pastes a YouTube (watch, youtu.be, shorts, live) or Vimeo link. Other sites are rejected. |
 | PWA | `src/app/manifest.ts`, `public/sw.js` | Installable ("Add to Home Screen"), app icons, and an offline fallback page. |
-| Data models | `src/models/index.ts` | `User`, `Announcement`, `Message`, `Video` (Mongoose). |
+| Data models | `src/models/` | See `AGENTS.md` and `docs/ROADMAP.md`. |
 
 ### Common changes
 
 - **Rename the app or change its colour:** edit `src/lib/site.ts`, then replace the icons in `public/icons/`
   (192×192, 512×512, a 512×512 maskable icon, and a 180×180 Apple touch icon). <https://realfavicongenerator.net> can generate them.
-- **Add a page:** create `src/app/(app)/your-page/page.tsx` and call `await requireUser()` (or `requireAdmin()`) at the top.
+- **Add a page:** create `src/app/(app)/your-page/page.tsx` and call `await requireUser()` (or `requireCoach()`) at the top.
   Then add a link in `src/app/(app)/layout.tsx`.
-- **Add a data model:** add a schema in `src/models/index.ts`.
-- **Admin rules:** people in `ADMIN_EMAILS` are made admin again every time they log in. Use the Admin page for everyone else.
+- **Add a data model:** add a schema in `src/models/` and re-export it from `index.ts`.
+- **Coach rules:** people in `COACH_EMAILS` are made coach again every time they log in. Use the Access page for everyone else.
 
 ### Installing the PWA
 

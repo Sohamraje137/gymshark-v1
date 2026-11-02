@@ -1,13 +1,13 @@
 import { Message } from "@/models";
 import { sendMessage } from "./actions";
 
-/** Renders one user <-> admin-team thread plus a reply box. */
+/** Renders one user <-> coach thread plus a reply box. */
 export async function Conversation({
   conversationId,
-  viewerIsAdmin,
+  viewerIsCoach,
 }: {
   conversationId: string;
-  viewerIsAdmin: boolean;
+  viewerIsCoach: boolean;
 }) {
   const messages = await Message.find({ conversation: conversationId })
     .sort({ createdAt: 1 })
@@ -20,7 +20,7 @@ export async function Conversation({
       <div className="space-y-3">
         {messages.length === 0 && <p className="text-sm text-slate-500">No messages yet. Say hello!</p>}
         {messages.map((m) => {
-          const mine = m.fromAdmin === viewerIsAdmin;
+          const mine = m.fromCoach === viewerIsCoach;
           return (
             <div key={m._id.toString()} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
               <div
@@ -30,7 +30,7 @@ export async function Conversation({
               >
                 <p className="whitespace-pre-wrap">{m.body}</p>
                 <p className={`mt-1 text-[11px] ${mine ? "text-indigo-200" : "text-slate-500"}`}>
-                  {m.fromAdmin ? `${m.sender?.name ?? "Admin"} (admin)` : m.sender?.name} ·{" "}
+                  {m.fromCoach ? `${m.sender?.name ?? "Coach"} (coach)` : m.sender?.name} ·{" "}
                   {m.createdAt.toLocaleString()}
                 </p>
               </div>

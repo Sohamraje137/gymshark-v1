@@ -8,25 +8,25 @@ export const metadata = { title: "Messages" };
 export default async function MessagesPage() {
   const user = await requireUser();
 
-  if (user.role !== "admin") {
+  if (user.role !== "coach") {
     return (
       <div>
         <h1 className="page-title">Messages</h1>
-        <p className="-mt-4 mb-4 text-sm text-slate-500">Your private channel with the admin team.</p>
-        <Conversation conversationId={user.id} viewerIsAdmin={false} />
+        <p className="-mt-4 mb-4 text-sm text-slate-500">Your private channel with your coach.</p>
+        <Conversation conversationId={user.id} viewerIsCoach={false} />
       </div>
     );
   }
 
-  // Admin inbox: the latest message of every conversation.
+  // Coach inbox: the latest message of every conversation.
   const latest = await Message.aggregate<{
     _id: string;
     body: string;
-    fromAdmin: boolean;
+    fromCoach: boolean;
     createdAt: Date;
   }>([
     { $sort: { createdAt: -1 } },
-    { $group: { _id: "$conversation", body: { $first: "$body" }, fromAdmin: { $first: "$fromAdmin" }, createdAt: { $first: "$createdAt" } } },
+    { $group: { _id: "$conversation", body: { $first: "$body" }, fromCoach: { $first: "$fromCoach" }, createdAt: { $first: "$createdAt" } } },
     { $sort: { createdAt: -1 } },
     { $limit: 100 },
   ]);
@@ -37,7 +37,7 @@ export default async function MessagesPage() {
     <div>
       <h1 className="page-title">Inbox</h1>
       <p className="-mt-4 mb-4 text-sm text-slate-500">
-        To start a new conversation, open a user from the Admin page.
+        To start a new conversation, open a client from the Clients page.
       </p>
       <div className="card divide-y divide-slate-100 p-0">
         {latest.length === 0 && <p className="p-5 text-sm text-slate-500">No messages yet.</p>}
@@ -52,12 +52,12 @@ export default async function MessagesPage() {
               <div className="min-w-0">
                 <p className="font-medium">{person?.name ?? person?.email ?? "Unknown user"}</p>
                 <p className="truncate text-sm text-slate-500">
-                  {c.fromAdmin ? "You: " : ""}
+                  {c.fromCoach ? "You: " : ""}
                   {c.body}
                 </p>
               </div>
               <div className="flex shrink-0 items-center gap-2 text-xs text-slate-400">
-                {!c.fromAdmin && <span className="rounded-full bg-amber-100 px-2 py-0.5 text-amber-700">Needs reply</span>}
+                {!c.fromCoach && <span className="rounded-full bg-amber-100 px-2 py-0.5 text-amber-700">Needs reply</span>}
                 {c.createdAt.toLocaleDateString()}
               </div>
             </Link>

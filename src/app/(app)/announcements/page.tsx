@@ -6,7 +6,7 @@ export const metadata = { title: "Announcements" };
 
 export default async function AnnouncementsPage() {
   const user = await requireUser();
-  const isAdmin = user.role === "admin";
+  const isCoach = user.role === "coach";
   const announcements = await Announcement.find()
     .sort({ createdAt: -1 })
     .limit(50)
@@ -17,7 +17,7 @@ export default async function AnnouncementsPage() {
     <div className="space-y-6">
       <h1 className="page-title">Announcements</h1>
 
-      {isAdmin && (
+      {isCoach && (
         <form action={createAnnouncement} className="card space-y-3">
           <h2 className="font-medium">Post an announcement</h2>
           <input name="title" placeholder="Title" required maxLength={200} className="input" />
@@ -34,10 +34,10 @@ export default async function AnnouncementsPage() {
             <div>
               <h2 className="text-lg font-semibold">{a.title}</h2>
               <p className="text-xs text-slate-500">
-                {a.author?.name ?? "Admin"} · {a.createdAt.toLocaleString()}
+                {a.author?.name ?? "Coach"} · {a.createdAt.toLocaleString()}
               </p>
             </div>
-            {isAdmin && (
+            {isCoach && (
               <form action={deleteAnnouncement.bind(null, a._id.toString())}>
                 <button className="btn-danger">Delete</button>
               </form>
