@@ -53,9 +53,11 @@ if (devLoginEnabled) {
         const passcode = process.env.DEV_LOGIN_PASSCODE;
         if (passcode && c.passcode !== passcode) return null;
 
+        // Missing form fields arrive as the strings "null"/"undefined".
+        const name = typeof c.name === "string" && !["", "null", "undefined"].includes(c.name.trim()) ? c.name.trim() : "";
         const user = await upsertUserOnLogin({
           email,
-          name: String(c.name ?? "").trim() || email.split("@")[0],
+          nameIfNew: name || email.split("@")[0],
           roleIfNew: c.role === "coach" ? "coach" : "client",
         });
         if (user.blocked) return null;

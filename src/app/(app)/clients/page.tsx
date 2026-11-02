@@ -46,7 +46,7 @@ export default async function ClientsPage({ searchParams }: PageProps<"/clients"
     { $project: { name: 1, email: 1, lastLoginAt: 1, status: 1, onboardedAt: 1 } },
     { $sort: { name: 1, email: 1 } },
     { $limit: 500 },
-  ]);
+  ]).collation({ locale: "en", strength: 2 }); // case-insensitive name sort
 
   const ids = clients.map((c) => c._id);
   const [checkIns, lastLogs, sessions] = await Promise.all([
@@ -75,10 +75,10 @@ export default async function ClientsPage({ searchParams }: PageProps<"/clients"
 
   return (
     <div className="space-y-6">
-      <h1 className="page-title mb-0">Clients ({clients.length})</h1>
+      <h1 className="page-title">Clients ({clients.length})</h1>
 
       <div className="space-y-3">
-        <nav className="-mx-1 flex gap-1 overflow-x-auto text-sm" aria-label="Filter by status">
+        <nav className="flex gap-1 overflow-x-auto text-sm" aria-label="Filter by status">
           {FILTERS.map((f) => (
             <Link
               key={f.value}

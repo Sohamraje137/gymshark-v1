@@ -66,7 +66,8 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
               <label htmlFor="status" className="sr-only">
                 Status
               </label>
-              <select id="status" name="status" defaultValue={status} className="input w-auto py-1.5 capitalize">
+              {/* key: remount after a change so React's post-action form reset shows the saved status. */}
+              <select key={status} id="status" name="status" defaultValue={status} className="input w-auto py-1.5 capitalize">
                 {CLIENT_STATUSES.map((s) => (
                   <option key={s} value={s}>
                     {s}
@@ -82,13 +83,13 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
         </div>
       </div>
 
-      <nav className="-mx-4 flex gap-1 overflow-x-auto border-b border-slate-200 px-4 text-sm sm:mx-0 sm:px-0" aria-label="Client sections">
+      <nav className="-mx-4 flex overflow-x-auto sm:gap-1 border-b border-slate-200 px-4 text-sm sm:mx-0 sm:px-0" aria-label="Client sections">
         {TABS.map((t) => (
           <Link
             key={t.value}
             href={`/clients/${clientId}?tab=${t.value}`}
             aria-current={tab === t.value ? "page" : undefined}
-            className={`-mb-px border-b-2 px-3 py-2 whitespace-nowrap ${
+            className={`-mb-px border-b-2 px-2.5 py-2 sm:px-3 whitespace-nowrap ${
               tab === t.value
                 ? "border-indigo-600 font-medium text-indigo-700"
                 : "border-transparent text-slate-600 hover:text-slate-900"

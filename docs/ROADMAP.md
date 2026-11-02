@@ -11,17 +11,24 @@ Status: ✅ done · 🚧 in progress · ⏳ next · 💭 later / needs input
 - ✅ Domain models: ClientProfile, MealLog, WorkoutLog, ActivityLog, CheckIn, CoachingSession, CoachNote
 - ✅ Messaging (client ↔ coach), announcements, video library, Google Calendar page
 
-## Phase 1: Core coaching loop 🚧
+## Phase 1: Core coaching loop ✅ (built with dev login; Google paths noted)
 
 | Area | Routes / files | Status |
 |---|---|---|
-| Client logging: meals, workouts, activities, daily view vs targets | `/log`, `components/logs/` | 🚧 |
-| Onboarding intake | `/onboarding` | 🚧 |
-| Weekly check-ins (client submits, coach reviews + feedback) | `/check-ins`, `components/checkins/` | 🚧 |
-| Coach workspace: client list, client page, notes, targets, status, coach dashboard | `/clients`, `components/dashboard/CoachDashboard.tsx` | 🚧 |
-| Scheduling: weekly/monthly calls with Google Meet links | `/schedule`, `/sessions`, `components/sessions/` | 🚧 |
-| Integrations: Hevy sync, Cronometer + Excel/CSV import | `/settings/integrations`, `src/lib/integrations/` | 🚧 |
-| Client dashboard (today, this week's check-in, next call) | `components/dashboard/ClientDashboard.tsx` | ⏳ |
+| Client logging: meals, workouts, activities, daily view vs targets | `/log`, `components/logs/` | ✅ |
+| Onboarding intake (sets time zone, status → active) | `/onboarding` | ✅ |
+| Weekly check-ins (client submits, coach reviews + feedback) | `/check-ins`, `components/checkins/` | ✅ |
+| Coach workspace: client list, add client, client page (overview, targets, status, notes, tabs), coach dashboard | `/clients`, `components/clients/`, `components/dashboard/CoachDashboard.tsx` | ✅ |
+| Scheduling: calls with Meet links, weekly repeats, reschedule/cancel/complete | `/schedule`, `/sessions`, `components/sessions/` | ✅ without Google; Meet creation unverified live |
+| Integrations: Hevy sync (API key), Cronometer CSV import | `/settings/integrations`, `src/lib/integrations/`, `docs/integrations.md` | ✅ with fixtures; real Hevy account + real Cronometer export unverified |
+| Client dashboard (today vs targets, check-in status, next call) | `components/dashboard/ClientDashboard.tsx` | ✅ |
+
+Known gaps from Phase 1:
+- Coach has no time-zone setting; coach dashboard "today" uses the server zone (call times render in the browser zone).
+- Validation errors in most forms throw to `(app)/error.tsx` (message hidden in production builds). Move to `useActionState` inline errors.
+- Log entries can be added/deleted but not edited. Deleting an imported entry may come back on the next sync.
+- Hevy incremental sync doesn't yet handle deleted/edited older workouts (switch to `/v1/workouts/events`, see `docs/integrations.md`).
+- `BodyMetric` model (weight/body fat/waist from Hevy, Cronometer biometrics, Excel) not added yet; wait for the brain dump's tracker.
 
 ## Phase 2: After the brain dump 💭
 
@@ -43,3 +50,5 @@ Status: ✅ done · 🚧 in progress · ⏳ next · 💭 later / needs input
 - 2026-11-02: One coach practice per deployment (no multi-tenant). Roles `coach`/`client`.
 - 2026-11-02: Days stored as `YYYY-MM-DD` in the client's time zone; metric units in the DB.
 - 2026-11-02: Integrations write into the same log collections, tagged with `source` + `externalId`.
+- 2026-11-02: No third-party MCP servers for client data (they're single-user and need each client's password). Pull data into our DB; later expose our own coach-only MCP server.
+- 2026-11-02: Cronometer has no public API → CSV import (or Cronometer Pro for the coach). Hevy API needs Hevy Pro per client.

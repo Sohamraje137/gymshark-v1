@@ -159,7 +159,7 @@ export async function completeSession(
   return { ok: "Marked as completed." };
 }
 
-export async function cancelSession(sessionId: string, _prev: SessionActionState): Promise<SessionActionState> {
+export async function cancelSession(sessionId: string): Promise<SessionActionState> {
   await requireCoach();
   const session = await findSession(sessionId);
   if (!session) return { error: "Call not found." };

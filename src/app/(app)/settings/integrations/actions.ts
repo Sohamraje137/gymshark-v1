@@ -27,7 +27,7 @@ export async function saveHevyKey(_prev: ActionState, formData: FormData): Promi
     { upsert: true },
   );
   revalidate();
-  return { ok: true, message: "Hevy key saved. Press “Sync now” to import your workouts." };
+  return { ok: true, message: "New Hevy key saved." };
 }
 
 export async function removeHevyKey() {
@@ -46,7 +46,7 @@ export async function syncHevy(): Promise<ActionState> {
     revalidate();
     return {
       ok: true,
-      message: `Synced ${r.fetched} workout${r.fetched === 1 ? "" : "s"}: ${r.created} new, ${r.updated} updated, ${r.unchanged} unchanged.`,
+      message: `Synced ${r.fetched} workout${r.fetched === 1 ? "" : "s"}: ${r.created} new, ${r.existing} already imported (refreshed).`,
     };
   } catch (err) {
     if (err instanceof HevyApiError) return { ok: false, message: err.message };
@@ -73,7 +73,7 @@ export async function uploadCronometerCsv(_prev: ActionState, formData: FormData
       ok: true,
       message:
         `Imported ${r.rows - r.skipped.length} of ${r.rows} rows into ${r.meals} meals: ` +
-        `${r.created} new, ${r.updated} updated, ${r.unchanged} unchanged` +
+        `${r.created} new, ${r.existing} already imported (refreshed)` +
         (r.skipped.length ? `, ${r.skipped.length} rows skipped.` : "."),
       details,
     };

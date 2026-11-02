@@ -8,11 +8,12 @@ export const metadata = { title: "Connections" };
 
 export default async function IntegrationsPage() {
   const user = await requireClient();
-  const profile = await ClientProfile.findOne({ user: user._id })
-    .select("+integrations.hevyApiKey timeZone integrations")
-    .lean();
-  // The key itself never leaves the server; the page only learns whether one is stored.
-  const hevyConnected = Boolean(profile?.integrations?.hevyApiKey);
+  const [profile, hasKey] = await Promise.all([
+    ClientProfile.findOne({ user: user._id }).select("timeZone integrations.hevyLastSyncAt integrations.cronometerLastImportAt").lean(),
+    // Only ask whether a key exists; the key itself is never loaded for rendering.
+    ClientProfile.exists({ user: user._id, "integrations.hevyApiKey": { $type: "string" } }),
+  ]);
+  const hevyConnected = Boolean(hasKey);
   const timeZone = profile?.timeZone || "UTC";
   const fmt = (d?: Date | null) =>
     d
@@ -43,12 +44,17 @@ export default async function IntegrationsPage() {
 
         {hevyConnected && (
           <div className="space-y-3">
-            <p className="text-sm text-slate-600">Last sync: {fmt(profile?.integrations?.hevyLastSyncAt)}</p>
+            <p className="text-sm text-slate-600">
+              {profile?.integrations?.hevyLastSyncAt
+                ? `Last sync: ${fmt(profile.integrations.hevyLastSyncAt)}`
+                : "Key saved. Press “Sync now” to import your last 90 days of workouts."}
+            </p>
             <HevySyncForm />
           </div>
         )}
 
-        <HevyKeyForm connected={hevyConnected} />
+        {/* Remount on connect/disconnect so a stale result message does not linger. */}
+        <HevyKeyForm key={String(hevyConnected)} connected={hevyConnected} />
 
         {hevyConnected && (
           <form action={removeHevyKey}>

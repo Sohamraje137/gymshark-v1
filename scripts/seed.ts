@@ -121,9 +121,11 @@ async function main() {
     { client: alex._id, author: coach._id, body: "Knee is fine on squats; avoid deep lunges for now.", tags: ["injury"] },
   ]);
 
+  const minutesAgo = (m: number) => new Date(Date.now() - m * 60_000);
   await Message.insertMany([
-    { conversation: alex._id, sender: alex._id, fromCoach: false, body: "Hit a squat PR today!" },
-    { conversation: alex._id, sender: coach._id, fromCoach: true, body: "Huge! Let's talk deload on Thursday." },
+    { conversation: alex._id, sender: alex._id, fromCoach: false, body: "Hit a squat PR today!", createdAt: minutesAgo(180) },
+    { conversation: alex._id, sender: coach._id, fromCoach: true, body: "Huge! Let's talk deload on Thursday.", createdAt: minutesAgo(120) },
+    { conversation: alex._id, sender: alex._id, fromCoach: false, body: "Sounds good. Should I keep the same weights until then?", createdAt: minutesAgo(30) },
   ]);
 
   console.log("Seeded demo users: coach@demo.local, alex@demo.local, priya@demo.local");

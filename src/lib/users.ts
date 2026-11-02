@@ -17,7 +17,8 @@ export async function upsertUserOnLogin(input: {
   image?: string | null;
   googleId?: string;
   googleRefreshToken?: string;
-  /** Role for a brand-new user (dev login only). Ignored for existing users. */
+  /** Name and role for a brand-new user (dev login only). Ignored for existing users. */
+  nameIfNew?: string;
   roleIfNew?: Role;
 }) {
   await connectDB();
@@ -35,7 +36,10 @@ export async function upsertUserOnLogin(input: {
         ...(input.googleRefreshToken && { googleRefreshToken: input.googleRefreshToken }),
         ...(isListedCoach && { role: "coach" }),
       },
-      ...(!isListedCoach && { $setOnInsert: { role: input.roleIfNew ?? "client" } }),
+      $setOnInsert: {
+        ...(input.nameIfNew && !input.name && { name: input.nameIfNew }),
+        ...(!isListedCoach && { role: input.roleIfNew ?? "client" }),
+      },
     },
     { upsert: true, returnDocument: "after", setDefaultsOnInsert: true },
   );

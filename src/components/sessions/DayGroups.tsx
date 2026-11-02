@@ -5,8 +5,9 @@ import { addDays, formatDay, todayIn } from "@/lib/dates";
 import { useBrowserTimeZone } from "./useBrowserTimeZone";
 
 /**
- * Groups server-rendered items under day headings in the viewer's own time zone
- * (UTC until hydrated). Items keep the order they are given in.
+ * Groups server-rendered items under day headings in the viewer's own time zone (UTC until hydrated).
+ * Items keep the order they are given in. Headings and items are keyed siblings in one list, so an item
+ * that moves to another day (reschedule) keeps its client state, e.g. a warning message.
  */
 export function DayGroups({
   items,
@@ -21,28 +22,24 @@ export function DayGroups({
   if (items.length === 0) return <p className="card text-sm text-slate-500">{empty}</p>;
 
   const today = todayIn(timeZone, new Date(nowIso));
-  const groups = new Map<string, ReactNode[]>();
+  const label = (day: string) => {
+    const prefix = { [today]: "Today · ", [addDays(today, 1)]: "Tomorrow · ", [addDays(today, -1)]: "Yesterday · " }[day];
+    return `${prefix ?? ""}${formatDay(day)}`;
+  };
+
+  const children: ReactNode[] = [];
+  let lastDay = "";
   for (const item of items) {
     const day = todayIn(timeZone, new Date(item.at));
-    groups.set(day, [...(groups.get(day) ?? []), <li key={item.key}>{item.node}</li>]);
+    if (day !== lastDay) {
+      children.push(
+        <h3 key={`day-${day}`} className="pt-3 text-xs font-semibold tracking-wide text-slate-500 uppercase first:pt-0">
+          {label(day)}
+        </h3>,
+      );
+      lastDay = day;
+    }
+    children.push(<div key={item.key}>{item.node}</div>);
   }
-  const label = (day: string) =>
-    day === today
-      ? `Today · ${formatDay(day)}`
-      : day === addDays(today, 1)
-        ? `Tomorrow · ${formatDay(day)}`
-        : day === addDays(today, -1)
-          ? `Yesterday · ${formatDay(day)}`
-          : formatDay(day);
-
-  return (
-    <div className="space-y-5">
-      {[...groups].map(([day, nodes]) => (
-        <section key={day}>
-          <h3 className="mb-2 text-xs font-semibold tracking-wide text-slate-500 uppercase">{label(day)}</h3>
-          <ul className="space-y-3">{nodes}</ul>
-        </section>
-      ))}
-    </div>
-  );
+  return <div className="space-y-3">{children}</div>;
 }

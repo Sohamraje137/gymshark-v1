@@ -1,9 +1,10 @@
 import "server-only";
+import type { Model, QueryFilter } from "mongoose";
 import { connectDB } from "@/lib/db";
 import { CoachingSession } from "@/models";
 import type { SessionStatus, SessionType, SessionView } from "./constants";
 
-type Filter = NonNullable<Parameters<typeof CoachingSession.find>[0]>;
+type Filter = QueryFilter<typeof CoachingSession extends Model<infer Raw> ? Raw : never>;
 
 /**
  * Loads sessions as plain `SessionView`s with client/coach names.

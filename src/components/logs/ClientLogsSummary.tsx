@@ -49,8 +49,8 @@ export async function ClientLogsSummary({ clientId }: { clientId: string }) {
     target ? <span className="block text-[10px] font-normal text-slate-400">/ {fmt(target)}{unit}</span> : null;
 
   return (
-    <div className="space-y-5">
-      <div>
+    <div className="space-y-4">
+      <section className="card p-4">
         <h3 className="mb-2 text-sm font-semibold text-slate-700">
           Last 7 days
           {targets.workoutsPerWeek ? (
@@ -84,9 +84,9 @@ export async function ClientLogsSummary({ clientId }: { clientId: string }) {
             </tbody>
           </table>
         </div>
-      </div>
+      </section>
 
-      <div>
+      <section className="card p-4">
         <h3 className="mb-2 text-sm font-semibold text-slate-700">Recent workouts</h3>
         {recentWorkouts.length === 0 ? (
           <p className="text-sm text-slate-500">No workouts logged yet.</p>
@@ -118,7 +118,7 @@ export async function ClientLogsSummary({ clientId }: { clientId: string }) {
             ))}
           </ul>
         )}
-      </div>
+      </section>
     </div>
   );
 }

@@ -5,7 +5,7 @@ import { ClientProfile, MealLog, MEAL_TYPES } from "@/models";
 type MealType = (typeof MEAL_TYPES)[number];
 
 /** Upload limit. Server Action bodies are capped at 1 MB by default (next.config `serverActions.bodySizeLimit`). */
-export const CRONOMETER_MAX_BYTES = 1_000_000;
+export const CRONOMETER_MAX_BYTES = 5_000_000;
 
 /** A file the user uploaded is not a usable Cronometer export. The message is safe to show. */
 export class CronometerFormatError extends Error {}
@@ -163,15 +163,14 @@ export function parseCronometerCsv(text: string): CronometerParseResult {
 export type CronometerImportResult = Omit<CronometerParseResult, "meals"> & {
   meals: number;
   created: number;
-  updated: number;
-  unchanged: number;
+  existing: number; // already imported; refreshed in place (timestamps make every match a modification)
 };
 
 /** Parses and upserts a Cronometer CSV for one client. Re-importing the same file changes nothing. */
 export async function importCronometerCsv(clientId: string, text: string): Promise<CronometerImportResult> {
   const parsed = parseCronometerCsv(text);
   await connectDB();
-  const result: CronometerImportResult = { ...parsed, meals: parsed.meals.length, created: 0, updated: 0, unchanged: 0 };
+  const result: CronometerImportResult = { ...parsed, meals: parsed.meals.length, created: 0, existing: 0 };
   if (parsed.meals.length > 0) {
     const write = await MealLog.bulkWrite(
       parsed.meals.map(({ description, ...m }) => ({
@@ -188,8 +187,7 @@ export async function importCronometerCsv(clientId: string, text: string): Promi
       { ordered: false },
     );
     result.created = write.upsertedCount;
-    result.updated = write.modifiedCount;
-    result.unchanged = write.matchedCount - write.modifiedCount;
+    result.existing = write.matchedCount;
   }
   await ClientProfile.updateOne({ user: clientId }, { $set: { "integrations.cronometerLastImportAt": new Date() } });
   return result;

@@ -2,7 +2,7 @@
 
 type Num = number | null | undefined;
 
-export type SetLike = { reps?: Num; weightKg?: Num; durationSec?: Num; distanceM?: Num; rpe?: Num };
+export type SetLike = { type?: string | null; reps?: Num; weightKg?: Num; durationSec?: Num; distanceM?: Num; rpe?: Num };
 
 const SOURCE_LABELS: Record<string, string> = { hevy: "Hevy", cronometer: "Cronometer", import: "Import" };
 
@@ -30,6 +30,7 @@ function setText(s: SetLike): string {
   let text = parts.join(" / ");
   if (s.weightKg != null && s.weightKg > 0) text += ` @ ${fmt(s.weightKg)} kg`;
   if (s.rpe != null) text += ` RPE ${fmt(s.rpe)}`;
+  if (s.type && s.type !== "normal") text += ` (${s.type === "warmup" ? "warm-up" : s.type})`;
   return text.trim();
 }
 

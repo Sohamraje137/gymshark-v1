@@ -17,10 +17,10 @@ export default async function Home({ searchParams }: PageProps<"/">) {
   async function devLogin(formData: FormData) {
     "use server";
     await signIn("dev-login", {
-      email: formData.get("email"),
-      name: formData.get("name"),
-      role: formData.get("role"),
-      passcode: formData.get("passcode"),
+      email: formData.get("email") ?? "",
+      name: formData.get("name") ?? "",
+      role: formData.get("role") ?? "",
+      passcode: formData.get("passcode") ?? "",
       redirectTo: "/dashboard",
     });
   }

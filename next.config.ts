@@ -3,6 +3,9 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   // The Dockerfile sets BUILD_STANDALONE=1 to get a self-contained server in .next/standalone.
   output: process.env.BUILD_STANDALONE === "1" ? "standalone" : undefined,
+  experimental: {
+    serverActions: { bodySizeLimit: "6mb" }, // Cronometer CSV uploads (capped at 5 MB in the action)
+  },
   images: {
     remotePatterns: [{ protocol: "https", hostname: "lh3.googleusercontent.com" }],
   },

@@ -91,7 +91,7 @@ async function hevyGet<T>(apiKey: string, path: string, params: Record<string, s
   throw new HevyApiError(`Hevy API error ${res.status}${body ? `: ${body}` : ""}`, "http", res.status);
 }
 
-/** Workouts, newest first (observed; the spec does not state the order). */
+/** Workouts, newest first (observed by third parties; the spec does not state the order). */
 export function listHevyWorkouts(apiKey: string, page = 1, pageSize = PAGE_SIZE) {
   return hevyGet<HevyWorkoutsPage>(apiKey, "/v1/workouts", { page, pageSize });
 }
@@ -103,6 +103,7 @@ export function listHevyWorkoutEvents(apiKey: string, since: Date, page = 1, pag
 
 // ---------- Mapping (pure) ----------
 
+const SET_TYPES = new Set(["normal", "warmup", "dropset", "failure"]);
 const num = (v: number | null | undefined) => (typeof v === "number" && Number.isFinite(v) ? v : undefined);
 
 /** Maps one Hevy workout to WorkoutLog fields. Hevy already uses kg, metres and seconds. */
@@ -123,6 +124,7 @@ export function mapHevyWorkout(w: HevyWorkout, timeZone: string) {
         sets: [...(e.sets ?? [])]
           .sort((a, b) => a.index - b.index)
           .map((s) => ({
+            type: SET_TYPES.has(s.type) && s.type !== "normal" ? (s.type as "warmup" | "dropset" | "failure") : undefined,
             reps: num(s.reps),
             weightKg: num(s.weight_kg),
             durationSec: num(s.duration_seconds),
@@ -137,18 +139,16 @@ export function mapHevyWorkout(w: HevyWorkout, timeZone: string) {
 
 // ---------- Sync ----------
 
-export type HevySyncResult = { fetched: number; created: number; updated: number; unchanged: number; since: string };
+export type HevySyncResult = { fetched: number; created: number; existing: number; since: string };
 
 /**
  * Pulls recent Hevy workouts for one client and upserts them as WorkoutLogs.
- * Reads pages (newest first) until workouts start before `hevyLastSyncAt - 2 days`,
- * or 90 days back on the first sync. Throws HevyApiError for a bad key, rate limit, or API error.
+ * Reads pages (newest first) until a whole page starts before `hevyLastSyncAt - 2 days`
+ * (90 days back on the first sync). Throws HevyApiError for a bad key, rate limit, or API error.
  */
 export async function syncHevyWorkouts(clientId: string): Promise<HevySyncResult> {
   await connectDB();
-  const profile = await ClientProfile.findOne({ user: clientId })
-    .select("+integrations.hevyApiKey timeZone integrations")
-    .lean();
+  const profile = await ClientProfile.findOne({ user: clientId }).select("+integrations.hevyApiKey").lean();
   const apiKey = profile?.integrations?.hevyApiKey;
   if (!profile || !apiKey) throw new HevyApiError("No Hevy API key saved.", "invalid_key");
 
@@ -159,7 +159,7 @@ export async function syncHevyWorkouts(clientId: string): Promise<HevySyncResult
     ? new Date(last.getTime() - SAFETY_MARGIN_MS)
     : new Date(startedAt.getTime() - FIRST_SYNC_DAYS * 24 * 60 * 60 * 1000);
 
-  const result: HevySyncResult = { fetched: 0, created: 0, updated: 0, unchanged: 0, since: cutoff.toISOString() };
+  const result: HevySyncResult = { fetched: 0, created: 0, existing: 0, since: cutoff.toISOString() };
 
   for (let page = 1; page <= MAX_PAGES; page++) {
     const data = await listHevyWorkouts(apiKey, page);
@@ -180,11 +180,11 @@ export async function syncHevyWorkouts(clientId: string): Promise<HevySyncResult
       );
       result.fetched += recent.length;
       result.created += write.upsertedCount;
-      result.updated += write.modifiedCount;
-      result.unchanged += write.matchedCount - write.modifiedCount;
+      result.existing += write.matchedCount;
     }
-    // Newest first: once a page reaches past the cutoff (or the last page), we are done.
-    if (recent.length < data.workouts.length || page >= data.page_count || data.workouts.length === 0) break;
+    // The list is newest first by creation, not strictly by start_time (a backdated workout can sit among new
+    // ones), so stop only at a page with nothing inside the window. Costs one extra request per sync.
+    if (recent.length === 0 || page >= data.page_count) break;
   }
 
   await ClientProfile.updateOne({ _id: profile._id }, { $set: { "integrations.hevyLastSyncAt": startedAt } });

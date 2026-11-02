@@ -80,7 +80,7 @@ export async function CoachDashboard({ user }: { user: CurrentUser }) {
     <div className="space-y-6">
       <h1 className="page-title">Hi {user.name?.split(" ")[0] ?? "coach"} 👋</h1>
 
-      <div className="flex flex-wrap gap-2">
+      <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
         {CLIENT_STATUSES.map((s) => (
           <Link
             key={s}

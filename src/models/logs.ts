@@ -37,7 +37,14 @@ export const MealLog = defineModel("MealLog", mealLogSchema);
 
 // ---------- Workouts ----------
 const setSchema = new Schema(
-  { reps: Number, weightKg: Number, durationSec: Number, distanceM: Number, rpe: Number },
+  {
+    type: { type: String, enum: ["normal", "warmup", "dropset", "failure"] }, // absent = normal
+    reps: Number,
+    weightKg: Number,
+    durationSec: Number,
+    distanceM: Number,
+    rpe: Number,
+  },
   { _id: false },
 );
 const exerciseSchema = new Schema(
