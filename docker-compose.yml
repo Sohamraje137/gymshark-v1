@@ -1,0 +1,23 @@
+# Runs the app + MongoDB on one small server:   docker compose up -d --build
+# Secrets come from .env (same keys as .env.example). MONGODB_URI is overridden to use the bundled DB.
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      MONGODB_URI: mongodb://mongo:27017/sachina
+    ports:
+      - "3000:3000"
+    depends_on:
+      - mongo
+
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    volumes:
+      - mongo-data:/data/db
+    # Not published to the internet; only the app container can reach it.
+
+volumes:
+  mongo-data:
